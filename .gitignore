@@ -1,5 +1,6 @@
 accounts.txt
 config.json
 *.exe
-mnet-auto-linux
-mnet-auto-macos
+*.bin
+*.app
+mnet-auto-macos-x64
