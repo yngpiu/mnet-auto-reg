@@ -1,27 +1,27 @@
 # Mnet Auto
 
-Tự động tạo tài khoản Mnet Plus. Chọn số lượng, tool làm phần còn lại.
+Automatically create Mnet Plus accounts. Choose the count, the tool does the rest.
 
-## Cài đặt
+## Install
 
-### Pre-built binary (khuyên dùng)
+### Pre-built binary (recommended)
 
-Tải file từ [releases](https://github.com/yngpiu/mnet-auto/releases) và chạy:
+Download from [releases](https://github.com/yngpiu/mnet-auto/releases):
 
-| File | Nền tảng |
+| File | Platform |
 |---|---|
 | `mnet-auto-x64.exe` | Windows |
 | `mnet-auto-x64.bin` | Linux |
 | `mnet-auto-macos-x64` | macOS |
 
-### Build từ source
+### Build from source
 
 ```
 go build -o mnet-auto-x64.exe .
 .\mnet-auto-x64.exe
 ```
 
-## Sử dụng
+## Usage
 
 ```
 Mnet Plus Account Auto Creator
@@ -35,13 +35,13 @@ Mnet Plus Account Auto Creator
   4. Exit
 ```
 
-- **Auto** — tạo email tạm + đăng ký qua API, retry 3 lần + domain rotation
-- **Manual** — nhập email thủ công + đăng ký qua API
+- **Auto** — auto temp email + API registration, retries 3 times with domain rotation
+- **Manual** — enter your own email + API registration
 
-Đổi mật khẩu mặc định trước khi tạo (yêu cầu: 8-20 ký tự, hoa + thường + số + ký tự đặc biệt).
+Change the default password before creating accounts (requirements: 8-20 chars, uppercase + lowercase + number + special char).
 
-## Lưu ý
+## Notes
 
-- Tool chờ ngẫu nhiên 10-30s giữa các tài khoản để tránh bị chặn
-- Tài khoản lưu trong `accounts.txt`
-- Email tạm thời, lưu lại nếu cần dùng sau
+- Random 10-30s delay between accounts to avoid rate limiting
+- Accounts saved to `accounts.txt`
+- Emails are temporary — save them if you need them later
