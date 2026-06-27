@@ -1,12 +1,12 @@
-# Mnet Auto
+# Mnet Auto Reg
 
-Automatically create Mnet Plus accounts. Choose the count, the tool does the rest.
+Automatically register Mnet Plus accounts. Choose the count, the tool does the rest.
 
 ## Install
 
 ### Pre-built binary (recommended)
 
-Download from [releases](https://github.com/yngpiu/mnet-auto/releases):
+Download from [releases](https://github.com/yngpiu/mnet-auto-reg/releases):
 
 | File | Platform |
 |---|---|

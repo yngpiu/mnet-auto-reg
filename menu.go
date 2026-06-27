@@ -4,7 +4,7 @@ import "fmt"
 
 func showMenu(cfg Config) {
 	fmt.Println()
-	printBold("  Mnet Plus Account Auto Creator")
+	printBold("  Mnet Plus Account Auto Registration")
 	fmt.Println()
 	printGray(fmt.Sprintf("  Current password: %s", cfg.Password))
 
