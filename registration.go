@@ -53,12 +53,17 @@ func createAccountApi(email, password string, mailClient *TempMailClient, mnetCl
 		return nil, fmt.Errorf("signup failed: %w", err)
 	}
 
-	printBlue("  Verifying...")
+	printGray("  Signup submitted, waiting for verification email...")
 	startTime := time.Now()
 	timeout := 90 * time.Second
+	checkCount := 0
 
 	for time.Since(startTime) < timeout {
 		time.Sleep(5 * time.Second)
+		checkCount++
+		if checkCount%3 == 0 {
+			printGray(fmt.Sprintf("  Still waiting for verification email... (%ds)", int(time.Since(startTime).Seconds())))
+		}
 
 		messages, err := mailClient.CheckMessages(email)
 		if err != nil {
@@ -70,8 +75,10 @@ func createAccountApi(email, password string, mailClient *TempMailClient, mnetCl
 				body := msg.BodyText + msg.BodyHTML
 				verifyToken := extractVerificationToken(body)
 				if verifyToken != "" {
+					printGreen("  Verification email received!")
 					sleep(randomInt(2000, 5000))
 
+					printBlue("  Verifying...")
 					res, err := mnetClient.VerifyEmail(verifyToken)
 					if err != nil {
 						printRed(fmt.Sprintf("  Verification error: %s", err.Error()))
