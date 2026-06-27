@@ -23,16 +23,16 @@ func extractVerificationToken(body string) string {
 }
 
 func createAccountApi(email, password string, mailClient *TempMailClient, mnetClient *MnetPlusClient, birthdate Birthdate, gender string) (*Account, error) {
-	printBlue("  Registering on Mnet...")
+	printBlue("  Registering...")
 
 	if err := mnetClient.InitSession(); err != nil {
-		return nil, fmt.Errorf("session init: %w", err)
+		return nil, fmt.Errorf("session init failed: %w", err)
 	}
 	sleep(randomInt(2000, 4000))
 
 	avail, err := mnetClient.CheckMailAvailability(email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("email check failed: %w", err)
 	}
 	if avail != 0 {
 		printYellow("  Email not available for signup")
@@ -43,20 +43,17 @@ func createAccountApi(email, password string, mailClient *TempMailClient, mnetCl
 
 	authToken, err := mnetClient.GetTokenForSignup(email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("auth token failed: %w", err)
 	}
-	printCyan(fmt.Sprintf("  Auth token received (%d chars)", len(authToken)))
 
 	sleep(randomInt(2000, 4000))
 
-	msg, err := mnetClient.Signup(email, password, authToken, gender, birthdate.Year)
+	_, err = mnetClient.Signup(email, password, authToken, gender, birthdate.Year)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("signup failed: %w", err)
 	}
-	printGreen("  Registration successful!")
-	printGreen(fmt.Sprintf("  Signup response: %s", msg))
 
-	printBlue("  Waiting for verification email from Mnet...")
+	printBlue("  Verifying...")
 	startTime := time.Now()
 	timeout := 90 * time.Second
 
@@ -73,18 +70,13 @@ func createAccountApi(email, password string, mailClient *TempMailClient, mnetCl
 				body := msg.BodyText + msg.BodyHTML
 				verifyToken := extractVerificationToken(body)
 				if verifyToken != "" {
-					printGreen(fmt.Sprintf("  Verification token found: %s...", truncate(verifyToken, 20)))
-
 					sleep(randomInt(2000, 5000))
 
-					printBlue("  Verifying account...")
 					res, err := mnetClient.VerifyEmail(verifyToken)
 					if err != nil {
 						printRed(fmt.Sprintf("  Verification error: %s", err.Error()))
 						return nil, fmt.Errorf("verify error: %w", err)
 					}
-
-					printGray(fmt.Sprintf("  Verify response: %v", truncate(fmt.Sprintf("%v", res), 200)))
 
 					var accessToken string
 					if d, ok := res["data"].(map[string]interface{}); ok {
@@ -94,24 +86,25 @@ func createAccountApi(email, password string, mailClient *TempMailClient, mnetCl
 					}
 
 					if accessToken != "" {
-						printGreen("  Account verified!")
 						status, err := mnetClient.CheckSignupStatus(email)
 						if err != nil {
-							printYellow(fmt.Sprintf("  Status check error: %s", err.Error()))
+							printRed(fmt.Sprintf("  Status check failed: %s", err.Error()))
+							return nil, nil
 						}
 						if status == 1 {
-							printGreen("  Signed up successfully via API!")
+							printGreen("  Account verified!")
 							return &Account{
 								Email:     email,
 								Password:  password,
 								CreatedAt: time.Now().Format(time.RFC3339),
 							}, nil
 						}
-						printYellow(fmt.Sprintf("  Signup status: %d (expected 1)", status))
-					} else {
-						printYellow("  Verify response missing accessToken")
+						printYellow(fmt.Sprintf("  Signup status: %d (expected 1) — server not ready", status))
+						return nil, nil
 					}
 
+					printRed("  Verification failed: no access token in response")
+					printGray(fmt.Sprintf("  Server response: %v", truncate(fmt.Sprintf("%v", res), 300)))
 					return nil, nil
 				}
 			}

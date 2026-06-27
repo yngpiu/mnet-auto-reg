@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 )
 
 func tryApiAuto(index, total int, password string, blockedDomains *[]string, onCreated func(Account)) *Account {
@@ -27,10 +26,10 @@ func tryApiAuto(index, total int, password string, blockedDomains *[]string, onC
 		}
 
 		email := emailResult.Email
-		if retry > 1 {
-			printCyan(fmt.Sprintf("  Retrying with new email: %s", email))
+		if retry == 1 {
+			printGray(fmt.Sprintf("  Email: %s", email))
 		} else {
-			printGreen(fmt.Sprintf("  Email: %s", email))
+			printGray(fmt.Sprintf("  Retry %d/%d — new email: %s", retry, maxRetries, email))
 		}
 
 		birthdate := randomBirthdate()
@@ -39,20 +38,16 @@ func tryApiAuto(index, total int, password string, blockedDomains *[]string, onC
 		account, err := createAccountApi(email, password, mailClient, mnetClient, birthdate, gender)
 		if err != nil {
 			if retry < maxRetries {
-				printYellow(fmt.Sprintf("  Account %d/%d API error, retrying (%d/%d): %s", index, total, retry, maxRetries, err.Error()))
+				printYellow(fmt.Sprintf("  Failed (retry %d/%d): %s", retry, maxRetries, err.Error()))
 				continue
 			}
-			printRed(fmt.Sprintf("  Registration error: %s", err.Error()))
+			printRed(fmt.Sprintf("  Failed: %s", err.Error()))
 			break
 		}
 
 		if account != nil {
-			createdAt := time.Now().Format(time.RFC3339)
-			saved := Account{Email: email, Password: password, CreatedAt: createdAt}
-			printGreen(fmt.Sprintf("  Account %d/%d completed: %s", index, total, email))
-			printGray(fmt.Sprintf("     Created at: %s", createdAt))
-			onCreated(saved)
-			return &saved
+			onCreated(*account)
+			return account
 		}
 
 		parts := splitEmail(email)
@@ -70,7 +65,7 @@ func tryApiAuto(index, total int, password string, blockedDomains *[]string, onC
 		}
 
 		if retry < maxRetries {
-			printYellow(fmt.Sprintf("  Account %d/%d failed, retrying (%d/%d)...", index, total, retry, maxRetries))
+			printYellow(fmt.Sprintf("  Failed (retry %d/%d)", retry, maxRetries))
 		}
 	}
 
@@ -112,7 +107,7 @@ func runManual(count int, password string, askEmail func() (string, bool), onCre
 		}
 
 		printCyan(fmt.Sprintf("\n  --- Account %d/%d ---", i, count))
-		printBlue(fmt.Sprintf("  Manual email mode: %s", email))
+		printGray(fmt.Sprintf("  Email: %s", email))
 
 		mailClient := NewTempMailClient()
 		mnetClient := NewMnetPlusClient()
@@ -121,8 +116,7 @@ func runManual(count int, password string, askEmail func() (string, bool), onCre
 
 		account, err := createAccountApi(email, password, mailClient, mnetClient, birthdate, gender)
 		if err != nil {
-			printRed(fmt.Sprintf("  Registration error: %s", err.Error()))
-			printRed(fmt.Sprintf("  Account %d/%d failed", i, count))
+			printRed(fmt.Sprintf("  Failed: %s", err.Error()))
 			if i < count {
 				d := delay("betweenAccounts")
 				printGray(fmt.Sprintf("  Wait %ds...", d/1000))
@@ -132,12 +126,8 @@ func runManual(count int, password string, askEmail func() (string, bool), onCre
 		}
 
 		if account != nil {
-			createdAt := time.Now().Format(time.RFC3339)
-			saved := Account{Email: email, Password: password, CreatedAt: createdAt}
-			printGreen(fmt.Sprintf("  Account %d/%d completed: %s", i, count, email))
-			printGray(fmt.Sprintf("     Created at: %s", createdAt))
-			accounts = append(accounts, saved)
-			onCreated(saved)
+			accounts = append(accounts, *account)
+			onCreated(*account)
 		} else {
 			printRed(fmt.Sprintf("  Account %d/%d failed", i, count))
 		}
